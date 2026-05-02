@@ -1,22 +1,30 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Summer Learning Adventure API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: profile
+    description: Child profile
+  - name: categories
+    description: Learning categories
+  - name: lessons
+    description: Individual lessons
+  - name: progress
+    description: Progress tracking
+  - name: stats
+    description: Summary statistics and achievements
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +32,169 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get the child profile
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+    put:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Update the child profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileBody"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+
+  /categories:
+    get:
+      operationId: listCategories
+      tags: [categories]
+      summary: List all learning categories
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+
+  /categories/{categoryId}/lessons:
+    get:
+      operationId: listLessons
+      tags: [lessons]
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: integer
+      summary: List all lessons in a category
+      responses:
+        "200":
+          description: List of lessons
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Lesson"
+
+  /lessons/{lessonId}:
+    get:
+      operationId: getLesson
+      tags: [lessons]
+      parameters:
+        - name: lessonId
+          in: path
+          required: true
+          schema:
+            type: integer
+      summary: Get a lesson with all its activities
+      responses:
+        "200":
+          description: Lesson with activities
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LessonDetail"
+
+  /progress:
+    get:
+      operationId: listProgress
+      tags: [progress]
+      summary: Get all activity progress records
+      responses:
+        "200":
+          description: Progress list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityProgress"
+
+  /progress/record:
+    post:
+      operationId: recordProgress
+      tags: [progress]
+      summary: Record completion of an activity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecordProgressBody"
+      responses:
+        "200":
+          description: Saved progress
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityProgress"
+
+  /stats/summary:
+    get:
+      operationId: getStatsSummary
+      tags: [stats]
+      summary: Get overall learning stats summary
+      responses:
+        "200":
+          description: Stats summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsSummary"
+
+  /stats/achievements:
+    get:
+      operationId: listAchievements
+      tags: [stats]
+      summary: List all achievements and which are unlocked
+      responses:
+        "200":
+          description: Achievements list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Achievement"
+
+  /stats/weekly:
+    get:
+      operationId: getWeeklyProgress
+      tags: [stats]
+      summary: Get activity counts broken down by week
+      responses:
+        "200":
+          description: Weekly breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WeekSummary"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +202,207 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    Profile:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        avatarEmoji:
+          type: string
+        totalStars:
+          type: integer
+        currentStreak:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, avatarEmoji, totalStars, currentStreak, createdAt]
+
+    UpdateProfileBody:
+      type: object
+      properties:
+        name:
+          type: string
+        avatarEmoji:
+          type: string
+      required: [name, avatarEmoji]
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        emoji:
+          type: string
+        colorHex:
+          type: string
+        totalLessons:
+          type: integer
+        completedLessons:
+          type: integer
+      required: [id, slug, name, description, emoji, colorHex, totalLessons, completedLessons]
+
+    Lesson:
+      type: object
+      properties:
+        id:
+          type: integer
+        categoryId:
+          type: integer
+        title:
+          type: string
+        week:
+          type: integer
+        dayOrder:
+          type: integer
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        totalActivities:
+          type: integer
+        completedActivities:
+          type: integer
+        starsEarned:
+          type: integer
+        isUnlocked:
+          type: boolean
+      required: [id, categoryId, title, week, dayOrder, difficulty, totalActivities, completedActivities, starsEarned, isUnlocked]
+
+    Activity:
+      type: object
+      properties:
+        id:
+          type: integer
+        lessonId:
+          type: integer
+        type:
+          type: string
+          enum: [sight_word_flash, spelling_drag, rhyme_match, counting_tap, pattern_fill, reading_passage, addition_basic, letter_match]
+        orderIndex:
+          type: integer
+        contentJson:
+          type: string
+          description: JSON-encoded activity data (words, images, options, correct answers)
+        isCompleted:
+          type: boolean
+        starsEarned:
+          type: integer
+      required: [id, lessonId, type, orderIndex, contentJson, isCompleted, starsEarned]
+
+    LessonDetail:
+      allOf:
+        - $ref: "#/components/schemas/Lesson"
+        - type: object
+          properties:
+            activities:
+              type: array
+              items:
+                $ref: "#/components/schemas/Activity"
+          required: [activities]
+
+    ActivityProgress:
+      type: object
+      properties:
+        id:
+          type: integer
+        activityId:
+          type: integer
+        starsEarned:
+          type: integer
+        completedAt:
+          type: string
+          format: date-time
+      required: [id, activityId, starsEarned, completedAt]
+
+    RecordProgressBody:
+      type: object
+      properties:
+        activityId:
+          type: integer
+        starsEarned:
+          type: integer
+      required: [activityId, starsEarned]
+
+    StatsSummary:
+      type: object
+      properties:
+        totalStars:
+          type: integer
+        totalActivitiesCompleted:
+          type: integer
+        totalLessonsCompleted:
+          type: integer
+        currentStreak:
+          type: integer
+        currentWeek:
+          type: integer
+        totalWeeks:
+          type: integer
+        categoriesProgress:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryProgress"
+      required: [totalStars, totalActivitiesCompleted, totalLessonsCompleted, currentStreak, currentWeek, totalWeeks, categoriesProgress]
+
+    CategoryProgress:
+      type: object
+      properties:
+        categoryId:
+          type: integer
+        categoryName:
+          type: string
+        emoji:
+          type: string
+        colorHex:
+          type: string
+        completedLessons:
+          type: integer
+        totalLessons:
+          type: integer
+        starsEarned:
+          type: integer
+      required: [categoryId, categoryName, emoji, colorHex, completedLessons, totalLessons, starsEarned]
+
+    Achievement:
+      type: object
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        emoji:
+          type: string
+        isUnlocked:
+          type: boolean
+        unlockedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required: [id, slug, name, description, emoji, isUnlocked]
+
+    WeekSummary:
+      type: object
+      properties:
+        week:
+          type: integer
+        activitiesCompleted:
+          type: integer
+        starsEarned:
+          type: integer
+        lessonsCompleted:
+          type: integer
+      required: [week, activitiesCompleted, starsEarned, lessonsCompleted]
