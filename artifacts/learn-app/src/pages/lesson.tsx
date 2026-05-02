@@ -112,7 +112,7 @@ function SpellingActivity({ content, onComplete }: { content: SpellingContent; o
     }
   }
 
-  const shuffled = [...content.letters];
+  const [shuffled] = useState(() => shuffle(content.letters));
 
   return (
     <div className="space-y-6 text-center px-4">
@@ -478,7 +478,9 @@ function ActivityCelebration({ stars, onNext, isLast }: { stars: number; onNext:
 }
 
 // ─── Lesson Complete ─────────────────────────────────────────────
-function LessonComplete({ totalStars, lessonTitle, onHome }: { totalStars: number; lessonTitle: string; onHome: () => void }) {
+function LessonComplete({ totalStars, lessonTitle, onHome, onWeeklyView }: {
+  totalStars: number; lessonTitle: string; onHome: () => void; onWeeklyView: () => void;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.8 }}
@@ -490,7 +492,7 @@ function LessonComplete({ totalStars, lessonTitle, onHome }: { totalStars: numbe
         <h2 className="font-fredoka text-4xl text-foreground">Lesson Complete!</h2>
         <p className="text-muted-foreground font-semibold mt-1">{lessonTitle}</p>
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap justify-center">
         {Array(totalStars > 9 ? 9 : totalStars).fill(0).map((_, i) => (
           <motion.span key={i} initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }}
             transition={{ delay: 0.08 * i, type: "spring" }} className="text-3xl">⭐</motion.span>
@@ -499,14 +501,24 @@ function LessonComplete({ totalStars, lessonTitle, onHome }: { totalStars: numbe
       <div className="bg-secondary/30 rounded-2xl px-6 py-3">
         <div className="font-fredoka text-3xl text-foreground">⭐ {totalStars} Stars Earned!</div>
       </div>
-      <motion.button
-        whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-        onClick={onHome}
-        className="bg-primary text-primary-foreground font-fredoka text-xl px-10 py-3 rounded-2xl shadow-md"
-        data-testid="button-home-after-lesson"
-      >
-        Back to Home
-      </motion.button>
+      <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
+        <motion.button
+          whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+          onClick={onWeeklyView}
+          className="flex-1 bg-primary text-primary-foreground font-fredoka text-lg px-6 py-3 rounded-2xl shadow-md"
+          data-testid="button-weekly-after-lesson"
+        >
+          📅 Weekly View
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+          onClick={onHome}
+          className="flex-1 bg-white text-primary font-fredoka text-lg px-6 py-3 rounded-2xl shadow-sm border-2 border-primary/30"
+          data-testid="button-home-after-lesson"
+        >
+          🏠 Home
+        </motion.button>
+      </div>
     </motion.div>
   );
 }
@@ -626,6 +638,7 @@ export default function LessonPlayer() {
             totalStars={totalStarsEarned}
             lessonTitle={lesson.title}
             onHome={() => setLocation("/")}
+            onWeeklyView={() => setLocation("/categories/weekly")}
           />
         ) : showCelebration ? (
           <ActivityCelebration

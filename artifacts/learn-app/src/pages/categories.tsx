@@ -18,8 +18,8 @@ const itemVariants = {
 
 type Tab = "subjects" | "weeks";
 
-export default function Categories() {
-  const [tab, setTab] = useState<Tab>("subjects");
+export default function Categories({ defaultTab = "subjects" }: { defaultTab?: Tab }) {
+  const [tab, setTab] = useState<Tab>(defaultTab);
   const { data: categories, isLoading } = useListCategories({ query: { queryKey: getListCategoriesQueryKey() } });
 
   if (isLoading) return <LoadingBounce message="Loading subjects..." />;

@@ -22,7 +22,8 @@ function Router() {
       <main className="flex-1">
         <Switch>
           <Route path="/" component={Home} />
-          <Route path="/categories" component={Categories} />
+          <Route path="/categories">{() => <Categories />}</Route>
+          <Route path="/categories/weekly">{() => <Categories defaultTab="weeks" />}</Route>
           <Route path="/categories/:categoryId" component={CategoryView} />
           <Route path="/lessons/:lessonId" component={LessonPlayer} />
           <Route path="/achievements" component={Achievements} />
