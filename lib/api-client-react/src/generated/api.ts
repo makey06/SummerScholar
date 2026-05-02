@@ -23,6 +23,7 @@ import type {
   HealthStatus,
   Lesson,
   LessonDetail,
+  LessonWithCategory,
   Profile,
   RecordProgressBody,
   StatsSummary,
@@ -340,6 +341,81 @@ export function useListCategories<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getListCategoriesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List all lessons across all categories
+ */
+export const getListAllLessonsUrl = () => {
+  return `/api/lessons`;
+};
+
+export const listAllLessons = async (
+  options?: RequestInit,
+): Promise<LessonWithCategory[]> => {
+  return customFetch<LessonWithCategory[]>(getListAllLessonsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListAllLessonsQueryKey = () => {
+  return [`/api/lessons`] as const;
+};
+
+export const getListAllLessonsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listAllLessons>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listAllLessons>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListAllLessonsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listAllLessons>>> = ({
+    signal,
+  }) => listAllLessons({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listAllLessons>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListAllLessonsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listAllLessons>>
+>;
+export type ListAllLessonsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all lessons across all categories
+ */
+
+export function useListAllLessons<
+  TData = Awaited<ReturnType<typeof listAllLessons>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listAllLessons>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListAllLessonsQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

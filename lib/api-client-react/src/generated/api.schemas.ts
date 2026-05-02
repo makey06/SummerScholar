@@ -56,6 +56,13 @@ export interface Lesson {
   isUnlocked: boolean;
 }
 
+export type LessonWithCategory = Lesson & {
+  categoryName: string;
+  categoryEmoji: string;
+  categoryColorHex: string;
+  categorySlug: string;
+};
+
 export type ActivityType = (typeof ActivityType)[keyof typeof ActivityType];
 
 export const ActivityType = {

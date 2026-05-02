@@ -59,6 +59,32 @@ export const ListCategoriesResponseItem = zod.object({
 export const ListCategoriesResponse = zod.array(ListCategoriesResponseItem);
 
 /**
+ * @summary List all lessons across all categories
+ */
+export const ListAllLessonsResponseItem = zod
+  .object({
+    id: zod.number(),
+    categoryId: zod.number(),
+    title: zod.string(),
+    week: zod.number(),
+    dayOrder: zod.number(),
+    difficulty: zod.enum(["beginner", "intermediate", "advanced"]),
+    totalActivities: zod.number(),
+    completedActivities: zod.number(),
+    starsEarned: zod.number(),
+    isUnlocked: zod.boolean(),
+  })
+  .and(
+    zod.object({
+      categoryName: zod.string(),
+      categoryEmoji: zod.string(),
+      categoryColorHex: zod.string(),
+      categorySlug: zod.string(),
+    }),
+  );
+export const ListAllLessonsResponse = zod.array(ListAllLessonsResponseItem);
+
+/**
  * @summary List all lessons in a category
  */
 export const ListLessonsParams = zod.object({

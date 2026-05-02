@@ -1,6 +1,6 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
-import { db, lessonsTable, activitiesTable, progressTable } from "@workspace/db";
+import { db, lessonsTable, activitiesTable, progressTable, categoriesTable } from "@workspace/db";
 import { eq, asc, inArray } from "drizzle-orm";
 import { ListLessonsParams, GetLessonParams } from "@workspace/api-zod";
 
@@ -16,6 +16,49 @@ async function getLessonWithStats(lessonId: number) {
   const starsEarned = progressRecords.reduce((sum, p) => sum + p.starsEarned, 0);
   return { activities, completedActivityIds, starsEarned };
 }
+
+router.get("/lessons", async (_req: Request, res: Response): Promise<void> => {
+  const [lessons, categories, allActivities, allProgress] = await Promise.all([
+    db.select().from(lessonsTable).orderBy(asc(lessonsTable.week), asc(lessonsTable.categoryId), asc(lessonsTable.dayOrder)),
+    db.select().from(categoriesTable),
+    db.select().from(activitiesTable),
+    db.select().from(progressTable),
+  ]);
+
+  const catMap = new Map(categories.map((c) => [c.id, c]));
+  const actsByLesson = new Map<number, typeof allActivities>();
+  for (const act of allActivities) {
+    if (!actsByLesson.has(act.lessonId)) actsByLesson.set(act.lessonId, []);
+    actsByLesson.get(act.lessonId)!.push(act);
+  }
+  const completedActivityIds = new Set(allProgress.map((p) => p.activityId));
+  const starsByActivity = new Map(allProgress.map((p) => [p.activityId, p.starsEarned]));
+
+  const result = lessons.map((lesson) => {
+    const acts = actsByLesson.get(lesson.id) ?? [];
+    const starsEarned = acts.reduce((sum, a) => sum + (starsByActivity.get(a.id) ?? 0), 0);
+    const completedActivities = acts.filter((a) => completedActivityIds.has(a.id)).length;
+    const cat = catMap.get(lesson.categoryId);
+    return {
+      id: lesson.id,
+      categoryId: lesson.categoryId,
+      categoryName: cat?.name ?? "",
+      categoryEmoji: cat?.emoji ?? "",
+      categoryColorHex: cat?.colorHex ?? "",
+      categorySlug: cat?.slug ?? "",
+      title: lesson.title,
+      week: lesson.week,
+      dayOrder: lesson.dayOrder,
+      difficulty: lesson.difficulty,
+      totalActivities: acts.length,
+      completedActivities,
+      starsEarned,
+      isUnlocked: lesson.isUnlocked,
+    };
+  });
+
+  res.json(result);
+});
 
 router.get("/categories/:categoryId/lessons", async (req: Request, res: Response): Promise<void> => {
   const parsed = ListLessonsParams.safeParse(req.params);

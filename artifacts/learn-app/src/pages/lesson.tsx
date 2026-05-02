@@ -24,6 +24,16 @@ interface ReadingContent { passage: string; question: string; options: string[];
 interface AdditionContent { a: number; b: number; c?: number; emoji: string; story: string | null; objects: string[]; correctAnswer: number; options: number[]; }
 interface LetterContent { uppercase: string; options: string[]; correctAnswer: string; emoji: string; }
 
+// ─── Shuffle utility ───────────────────────────────────────────────
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 // ─── Shared helpers ────────────────────────────────────────────────
 function ChoiceButton({ label, onClick, correct, wrong, disabled }: {
   label: string; onClick: () => void; correct?: boolean; wrong?: boolean; disabled: boolean;
@@ -48,7 +58,7 @@ function ChoiceButton({ label, onClick, correct, wrong, disabled }: {
 // ─── Sight Word ───────────────────────────────────────────────────
 function SightWordActivity({ content, onComplete }: { content: SightWordContent; onComplete: (stars: number) => void }) {
   const [selected, setSelected] = useState<string | null>(null);
-  const isCorrect = selected === content.correctAnswer;
+  const [options] = useState(() => shuffle(content.options));
 
   function pick(opt: string) {
     if (selected) return;
@@ -66,7 +76,7 @@ function SightWordActivity({ content, onComplete }: { content: SightWordContent;
       </motion.div>
       <div className="px-4 space-y-2">
         <p className="font-bold text-muted-foreground text-sm mb-3">Tap the word you just read!</p>
-        {content.options.map((opt) => (
+        {options.map((opt) => (
           <ChoiceButton key={opt} label={opt} onClick={() => pick(opt)}
             correct={selected !== null && opt === content.correctAnswer}
             wrong={selected === opt && opt !== content.correctAnswer}
@@ -154,6 +164,7 @@ function SpellingActivity({ content, onComplete }: { content: SpellingContent; o
 // ─── Rhyme Match ──────────────────────────────────────────────────
 function RhymeActivity({ content, onComplete }: { content: RhymeContent; onComplete: (stars: number) => void }) {
   const [selected, setSelected] = useState<string | null>(null);
+  const [options] = useState(() => shuffle(content.options));
 
   function pick(opt: string) {
     if (selected) return;
@@ -171,7 +182,7 @@ function RhymeActivity({ content, onComplete }: { content: RhymeContent; onCompl
       </motion.div>
 
       <div className="grid grid-cols-2 gap-3">
-        {content.options.map((opt) => (
+        {options.map((opt) => (
           <motion.button key={opt}
             whileHover={!selected ? { scale: 1.05 } : {}} whileTap={!selected ? { scale: 0.95 } : {}}
             onClick={() => pick(opt)} disabled={!!selected}
@@ -195,6 +206,7 @@ function RhymeActivity({ content, onComplete }: { content: RhymeContent; onCompl
 // ─── Counting ─────────────────────────────────────────────────────
 function CountingActivity({ content, onComplete }: { content: CountingContent; onComplete: (stars: number) => void }) {
   const [selected, setSelected] = useState<number | null>(null);
+  const [options] = useState(() => shuffle(content.options));
 
   function pick(n: number) {
     if (selected !== null) return;
@@ -215,7 +227,7 @@ function CountingActivity({ content, onComplete }: { content: CountingContent; o
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {content.options.map((n) => (
+        {options.map((n) => (
           <motion.button key={n}
             whileHover={selected === null ? { scale: 1.05 } : {}} whileTap={selected === null ? { scale: 0.95 } : {}}
             onClick={() => pick(n)} disabled={selected !== null}
@@ -239,6 +251,7 @@ function CountingActivity({ content, onComplete }: { content: CountingContent; o
 // ─── Pattern Fill ─────────────────────────────────────────────────
 function PatternActivity({ content, onComplete }: { content: PatternContent; onComplete: (stars: number) => void }) {
   const [selected, setSelected] = useState<string | null>(null);
+  const [options] = useState(() => shuffle(content.options));
 
   function pick(opt: string) {
     if (selected) return;
@@ -264,7 +277,7 @@ function PatternActivity({ content, onComplete }: { content: PatternContent; onC
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {content.options.map((opt) => (
+        {options.map((opt) => (
           <motion.button key={opt}
             whileHover={!selected ? { scale: 1.1 } : {}} whileTap={!selected ? { scale: 0.9 } : {}}
             onClick={() => pick(opt)} disabled={!!selected}
@@ -321,6 +334,7 @@ function ReadingActivity({ content, onComplete }: { content: ReadingContent; onC
 // ─── Addition ─────────────────────────────────────────────────────
 function AdditionActivity({ content, onComplete }: { content: AdditionContent; onComplete: (stars: number) => void }) {
   const [selected, setSelected] = useState<number | null>(null);
+  const [options] = useState(() => shuffle(content.options));
 
   function pick(n: number) {
     if (selected !== null) return;
@@ -365,7 +379,7 @@ function AdditionActivity({ content, onComplete }: { content: AdditionContent; o
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {content.options.map((n) => (
+        {options.map((n) => (
           <motion.button key={n}
             whileHover={selected === null ? { scale: 1.05 } : {}} whileTap={selected === null ? { scale: 0.95 } : {}}
             onClick={() => pick(n)} disabled={selected !== null}
@@ -389,6 +403,7 @@ function AdditionActivity({ content, onComplete }: { content: AdditionContent; o
 // ─── Letter Match ─────────────────────────────────────────────────
 function LetterMatchActivity({ content, onComplete }: { content: LetterContent; onComplete: (stars: number) => void }) {
   const [selected, setSelected] = useState<string | null>(null);
+  const [options] = useState(() => shuffle(content.options));
 
   function pick(opt: string) {
     if (selected) return;
@@ -406,7 +421,7 @@ function LetterMatchActivity({ content, onComplete }: { content: LetterContent; 
       </motion.div>
 
       <div className="grid grid-cols-2 gap-3">
-        {content.options.map((opt) => (
+        {options.map((opt) => (
           <motion.button key={opt}
             whileHover={!selected ? { scale: 1.05 } : {}} whileTap={!selected ? { scale: 0.95 } : {}}
             onClick={() => pick(opt)} disabled={!!selected}

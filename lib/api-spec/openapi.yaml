@@ -78,6 +78,21 @@ paths:
                 items:
                   $ref: "#/components/schemas/Category"
 
+  /lessons:
+    get:
+      operationId: listAllLessons
+      tags: [lessons]
+      summary: List all lessons across all categories
+      responses:
+        "200":
+          description: All lessons with category info
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LessonWithCategory"
+
   /categories/{categoryId}/lessons:
     get:
       operationId: listLessons
@@ -277,6 +292,21 @@ components:
         isUnlocked:
           type: boolean
       required: [id, categoryId, title, week, dayOrder, difficulty, totalActivities, completedActivities, starsEarned, isUnlocked]
+
+    LessonWithCategory:
+      allOf:
+        - $ref: "#/components/schemas/Lesson"
+        - type: object
+          properties:
+            categoryName:
+              type: string
+            categoryEmoji:
+              type: string
+            categoryColorHex:
+              type: string
+            categorySlug:
+              type: string
+          required: [categoryName, categoryEmoji, categoryColorHex, categorySlug]
 
     Activity:
       type: object
