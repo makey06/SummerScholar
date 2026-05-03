@@ -1,6 +1,6 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
-import { db, profileTable } from "@workspace/db";
+import { db, profileTable, progressTable, achievementsTable } from "@workspace/db";
 import { UpdateProfileBody } from "@workspace/api-zod";
 
 const router = Router();
@@ -29,6 +29,13 @@ router.put("/profile", async (req: Request, res: Response): Promise<void> => {
   const { eq } = await import("drizzle-orm");
   const updated = await db.update(profileTable).set(parsed.data).where(eq(profileTable.id, profiles[0].id)).returning();
   res.json(updated[0]);
+});
+
+router.post("/profile/reset", async (req: Request, res: Response): Promise<void> => {
+  await db.delete(progressTable);
+  await db.update(profileTable).set({ totalStars: 0, currentStreak: 0, name: "Explorer", avatarEmoji: "🦄" });
+  await db.update(achievementsTable).set({ isUnlocked: false, unlockedAt: null });
+  res.json({ ok: true });
 });
 
 export default router;

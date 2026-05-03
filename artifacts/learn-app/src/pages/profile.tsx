@@ -6,11 +6,13 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import LoadingBounce from "@/components/LoadingBounce";
+import { useLocation } from "wouter";
 
 const AVATAR_OPTIONS = ["🦄", "🐱", "🐶", "🐸", "🦊", "🐼", "🐨", "🐯", "🦁", "🐻", "🐰", "🦋", "🐙", "🦖", "🦕", "🐳", "🐬", "🦜", "🦩", "🐧"];
 
 export default function Profile() {
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const profile = useGetProfile();
   const stats = useGetStatsSummary({ query: { queryKey: getGetStatsSummaryQueryKey() } });
   const achievements = useListAchievements({ query: { queryKey: getListAchievementsQueryKey() } });
@@ -20,6 +22,8 @@ export default function Profile() {
   const [name, setName] = useState("");
   const [avatarEmoji, setAvatarEmoji] = useState("");
   const [saved, setSaved] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
 
   function startEdit() {
     setName(profile.data?.name ?? "");
@@ -41,6 +45,23 @@ export default function Profile() {
         },
       }
     );
+  }
+
+  async function handleReset() {
+    const confirmed = window.confirm("Reset all progress, trophies, and stars?");
+    if (!confirmed) return;
+    setResetting(true);
+    try {
+      await fetch("/api/profile/reset", { method: "POST" });
+      await queryClient.invalidateQueries({ queryKey: getGetProfileQueryKey() });
+      await queryClient.invalidateQueries({ queryKey: getGetStatsSummaryQueryKey() });
+      await queryClient.invalidateQueries({ queryKey: getListAchievementsQueryKey() });
+      setResetDone(true);
+      setTimeout(() => setResetDone(false), 2000);
+      setLocation("/");
+    } finally {
+      setResetting(false);
+    }
   }
 
   if (profile.isLoading) return <LoadingBounce message="Loading profile..." />;
@@ -260,6 +281,26 @@ export default function Profile() {
           )}
         </motion.div>
       )}
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
+        className="bg-card rounded-2xl p-4 border border-card-border shadow-sm space-y-3"
+      >
+        <div>
+          <h3 className="font-fredoka text-lg text-foreground">Reset Everything</h3>
+          <p className="text-sm text-muted-foreground">Clears stars, lesson progress, and trophies.</p>
+        </div>
+        {resetDone && <div className="text-sm font-bold text-green-600">All reset!</div>}
+        <motion.button
+          whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+          onClick={handleReset}
+          disabled={resetting}
+          className="w-full bg-red-500 text-white font-fredoka text-lg py-3 rounded-2xl disabled:opacity-60"
+          data-testid="button-reset-everything"
+        >
+          {resetting ? "Resetting..." : "Reset Everything"}
+        </motion.button>
+      </motion.div>
     </div>
   );
 }
